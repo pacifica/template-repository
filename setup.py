@@ -19,5 +19,10 @@ setup(
     author_email='david.brown@pnnl.gov',
     packages=find_packages(),
     namespace_packages=['pacifica'],
+    entry_points={
+        'console_scripts': [
+            'pacifica-example=pacifica.example.__main__:main'
+        ]
+    },
     install_requires=[str(ir.req) for ir in INSTALL_REQS]
 )
