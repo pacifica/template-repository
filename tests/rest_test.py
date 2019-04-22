@@ -7,6 +7,7 @@ import cherrypy
 from cherrypy.test import helper
 from pacifica.example.orm import database_setup, ExampleModel
 from pacifica.example.rest import Root, error_page_default
+from pacifica.example.globals import CHERRYPY_CONFIG
 
 
 def examplemodel_droptables(func):
@@ -31,8 +32,8 @@ class ExampleCPTest(helper.CPWebCase):
     def setup_server():
         """Bind tables to in memory db and start service."""
         cherrypy.config.update({'error_page.default': error_page_default})
-        cherrypy.config.update('server.conf')
-        cherrypy.tree.mount(Root(), '/', 'server.conf')
+        cherrypy.config.update(CHERRYPY_CONFIG)
+        cherrypy.tree.mount(Root(), '/', CHERRYPY_CONFIG)
 
     @examplemodel_droptables
     def test_default_mul(self):

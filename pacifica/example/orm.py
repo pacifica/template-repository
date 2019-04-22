@@ -25,7 +25,7 @@ class ExampleModel(Model):
     deleted = DateTimeField(null=True, index=True)
 
     # pylint: disable=too-few-public-methods
-    class Meta(object):
+    class Meta:
         """The meta class that contains db connection."""
 
         database = DB

@@ -1,9 +1,11 @@
 language: python
-python:
-- 2.7
-- 3.6
+dist: xenial
 services:
 - redis-server
+python:
+- 3.6
+- 3.7
+
 stages:
 - lint
 - test
@@ -12,19 +14,21 @@ env:
   BROKER_URL: redis://localhost:6379/0
 
 script:
-- coverage run --include='pacifica/*' -p -m celery -A pacifica.example.tasks worker -c 1 -P solo -l info &
-- coverage run --include='pacifica/*' -m pytest -v
+- export EXAMPLE_CPCONFIG="$PWD/server.conf"
+- pip install .
+- cd tests
+- coverage run --include='*/site-packages/pacifica/example/*' -p -m celery -A pacifica.example.tasks worker -c 1 -P solo -l info &
+- coverage run --include='*/site-packages/pacifica/example/*' -m pytest -xsv
 - celery -A pacifica.example.tasks control shutdown || true
 - coverage combine -a .coverage*
 - coverage report -m --fail-under 100
-- if [[ $CODECLIMATE_REPO_TOKEN ]] ; then codeclimate-test-reporter; fi
 
 jobs:
   include:
   - stage: lint
     python: 3.6
     script: pre-commit run -a
-  - python: 2.7
+  - python: 3.7
     script: pre-commit run -a
 
 install:
