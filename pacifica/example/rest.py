@@ -21,7 +21,7 @@ def error_page_default(**kwargs):
 
 
 # pylint: disable=too-few-public-methods
-class Dispatch(object):
+class Dispatch:
     """CherryPy EventMatch endpoint."""
 
     exposed = True
@@ -34,7 +34,7 @@ class Dispatch(object):
 
 
 # pylint: disable=too-few-public-methods
-class Status(object):
+class Status:
     """CherryPy Receive Event object."""
 
     exposed = True
@@ -51,7 +51,7 @@ class Status(object):
 
 
 # pylint: disable=too-few-public-methods
-class Root(object):
+class Root:
     """CherryPy Root Object."""
 
     exposed = True
