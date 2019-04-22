@@ -4,7 +4,7 @@ pull_requests:
 
 environment:
   matrix:
-    - PYTHON: C:\Python27-x64
+    - PYTHON: C:\Python37-x64
     - PYTHON: C:\Python36-x64
 
 install:
@@ -12,7 +12,7 @@ install:
       & "$env:PYTHON\python.exe" -m virtualenv C:\pacifica;
       C:\pacifica\Scripts\activate.ps1;
       python -m pip install --upgrade pip setuptools wheel;
-      python -m pip install -r requirements-dev.txt
+      pip install -r requirements-dev.txt
 
 build: off
 
@@ -20,5 +20,6 @@ test_script:
   - ps: >
       mkdir C:\tmp; C:\pacifica\Scripts\activate.ps1;
       pre-commit run -a;
-      coverage run --include='pacifica/*' -m pytest -v;
+      pip install .; cd tests;
+      coverage run --include='*/site-packages/pacifica/example/*' -m pytest -xsv;
       coverage report -m --fail-under=100;
