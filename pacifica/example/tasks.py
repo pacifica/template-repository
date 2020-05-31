@@ -1,15 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """The Celery tasks module."""
-from os import getenv
 from celery import Celery, Task
 from pacifica.example import Example
-from pacifica.example.orm import ExampleModel
+from .orm import ExampleModel
+from .config import get_config
 
 CELERY_APP = Celery(
-    'notifications',
-    broker=getenv('BROKER_URL', 'pyamqp://'),
-    backend=getenv('BACKEND_URL', 'rpc://')
+    'example',
+    broker=get_config().get('celery', 'broker_url'),
+    backend=get_config().get('celery', 'backend_url')
 )
 
 
