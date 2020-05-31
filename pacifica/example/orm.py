@@ -40,14 +40,20 @@ class ExampleModel(Model):
     @classmethod
     def connect(cls):
         """Connect to the database."""
+        # pylint: disable=no-member
         cls._meta.database.connect(True)
+        # pylint: enable=no-member
 
     @classmethod
     def close(cls):
         """Close the connection to the database."""
+        # pylint: disable=no-member
         cls._meta.database.close()
+        # pylint: enable=no-member
 
     @classmethod
     def atomic(cls):
         """Do the database atomic action."""
+        # pylint: disable=no-member
         return cls._meta.database.atomic()
+        # pylint: enable=no-member

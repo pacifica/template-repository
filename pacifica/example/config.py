@@ -1,18 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """Configuration reading and validation module."""
-try:
-    from ConfigParser import SafeConfigParser
-except ImportError:  # pragma: no cover python 2 vs 3 issue
-    from configparser import SafeConfigParser
-from pacifica.example.globals import CONFIG_FILE
+from os import getenv
+from configparser import ConfigParser
+from .globals import CONFIG_FILE
 
 
 def get_config():
     """Return the ConfigParser object with defaults set."""
-    configparser = SafeConfigParser({
-        'peewee_url': 'sqliteext:///db.sqlite3'
-    })
+    configparser = ConfigParser()
     configparser.add_section('database')
+    configparser.set('database', 'peewee_url', getenv(
+        'PEEWEE_URL', 'postgres://example:example@localhost:5432/pacifica_example'))
+    configparser.add_section('celery')
+    configparser.set('celery', 'broker_url', getenv(
+        'BROKER_URL', 'pyamqp://'))
+    configparser.set('celery', 'backend_url', getenv(
+        'BACKEND_URL', 'rpc://'))
     configparser.read(CONFIG_FILE)
     return configparser

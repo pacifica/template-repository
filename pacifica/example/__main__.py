@@ -5,9 +5,9 @@ from time import sleep
 from argparse import ArgumentParser, SUPPRESS
 from threading import Thread
 import cherrypy
-from pacifica.example.orm import database_setup
-from pacifica.example.rest import Root, error_page_default
-from pacifica.example.globals import CHERRYPY_CONFIG
+from .orm import database_setup
+from .rest import Root, error_page_default
+from .globals import CHERRYPY_CONFIG
 
 
 def stop_later(doit=False):

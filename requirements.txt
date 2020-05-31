@@ -1,4 +1,0 @@
-celery
-cherrypy
-peewee
-six
