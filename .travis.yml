@@ -1,36 +1,38 @@
 language: python
-dist: xenial
+dist: bionic
 services:
-- redis-server
+  - redis-server
 python:
-- 3.6
-- 3.7
+  - 3.6
+  - 3.7
+  - 3.8
 
 stages:
-- lint
-- test
+  - lint
+  - test
 
 env:
   BROKER_URL: redis://localhost:6379/0
 
 script:
-- export EXAMPLE_CPCONFIG="$PWD/server.conf"
-- pip install .
-- cd tests
-- coverage run --include='*/site-packages/pacifica/example/*' -p -m celery -A pacifica.example.tasks worker -c 1 -P solo -l info &
-- coverage run --include='*/site-packages/pacifica/example/*' -m pytest -xsv
-- celery -A pacifica.example.tasks control shutdown || true
-- coverage combine -a .coverage*
-- coverage report -m --fail-under 100
+  - export EXAMPLE_CPCONFIG="$PWD/server.conf"
+  - pip install .
+  - cd tests
+  - coverage run --include='*/site-packages/pacifica/example/*' -m pytest -xsv
+  - celery -A pacifica.example.tasks control shutdown || true
+  - coverage combine -a .coverage*
+  - coverage report -m --fail-under 100
 
 jobs:
   include:
-  - stage: lint
-    python: 3.6
-    script: pre-commit run -a
-  - python: 3.7
-    script: pre-commit run -a
+    - stage: lint
+      python: 3.6
+      script: pre-commit run -a
+    - python: 3.7
+      script: pre-commit run -a
+    - python: 3.8
+      script: pre-commit run -a
 
 install:
+- pip install .
 - pip install -r requirements-dev.txt
-- pip install 'celery[redis]'

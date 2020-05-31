@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """The WSGI interface module for notifications."""
 import cherrypy
-from pacifica.example.rest import Root, error_page_default
-from pacifica.example.globals import CHERRYPY_CONFIG
+from .rest import Root, error_page_default
+from .globals import CHERRYPY_CONFIG
 
 cherrypy.config.update({'error_page.default': error_page_default})
 # pylint doesn't realize that application is actually a callable

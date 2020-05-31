@@ -5,8 +5,8 @@ from json import dumps
 import cherrypy
 from cherrypy import HTTPError
 from peewee import DoesNotExist
-from pacifica.example.orm import ExampleModel
-from pacifica.example.tasks import example_task
+from .orm import ExampleModel
+from .tasks import example_task
 
 
 def error_page_default(**kwargs):

@@ -17,4 +17,4 @@ uwsgi \
   --http-socket 0.0.0.0:8069 \
   --master \
   --die-on-term \
-  --wsgi-file /usr/src/app/pacifica/example/wsgi.py "$@"
+  --module pacifica.example.wsgi "$@"
