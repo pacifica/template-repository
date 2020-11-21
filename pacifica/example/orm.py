@@ -2,58 +2,68 @@
 # -*- coding: utf-8 -*-
 """The ORM module defining the SQL model for example."""
 import uuid
+import json
 from datetime import datetime
-from peewee import Model, CharField, DateTimeField, UUIDField
-from playhouse.db_url import connect
-from pacifica.example.config import get_config
-
-DB = connect(get_config().get('database', 'peewee_url'))
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey
+from pacifica.auth.user_model import Base, User
 
 
-def database_setup():
-    """Setup the database."""
-    ExampleModel.database_setup()
+def _generate_uuid():
+    """Generate a random uuid."""
+    return str(uuid.uuid4())
 
 
-class ExampleModel(Model):
+class ExampleModel(Base):
     """Example saving some name data."""
 
-    uuid = UUIDField(primary_key=True, default=uuid.uuid4, index=True)
-    value = CharField(index=True)
-    created = DateTimeField(default=datetime.now, index=True)
-    updated = DateTimeField(default=datetime.now, index=True)
-    deleted = DateTimeField(null=True, index=True)
+    uuid = Column(String(40), primary_key=True, default=_generate_uuid, index=True)
+    value = Column(Text(), default='')
+    user_uuid = Column(String(40), ForeignKey('user.uuid'), index=True)
+    user = relationship('User')
+    created = Column(DateTime(), default=datetime.utcnow)
+    updated = Column(DateTime(), default=datetime.utcnow)
+    deleted = Column(DateTime(), default=None)
 
-    # pylint: disable=too-few-public-methods
-    class Meta:
-        """The meta class that contains db connection."""
 
-        database = DB
-    # pylint: enable=too-few-public-methods
+# pylint: disable=too-few-public-methods
+class ExampleEncoder(json.JSONEncoder):
+    """Session json encoder."""
 
-    @classmethod
-    def database_setup(cls):
-        """Setup the database by creating all tables."""
-        if not cls.table_exists():
-            cls.create_table()
+    def default(self, o):
+        """Default method part of the API."""
+        plain_keys = [
+            'uuid', 'value', 'user_uuid'
+        ]
+        if isinstance(o, ExampleModel):
+            ret = {}
+            for key in plain_keys:
+                ret[key] = getattr(o, key)
+            for key in ['created', 'updated', 'deleted']:
+                ret[key] = getattr(o, key).isoformat()
+            return ret
+        return json.JSONEncoder.default(self, o)
 
-    @classmethod
-    def connect(cls):
-        """Connect to the database."""
-        # pylint: disable=no-member
-        cls._meta.database.connect(True)
-        # pylint: enable=no-member
 
-    @classmethod
-    def close(cls):
-        """Close the connection to the database."""
-        # pylint: disable=no-member
-        cls._meta.database.close()
-        # pylint: enable=no-member
+# pylint: disable=invalid-name
+def as_example(db, dct):
+    """Convert a dictionary to session."""
+    if 'uuid' in dct:
+        example = db.query(ExampleModel).filter_by(uuid=dct['uuid']).first()
+        if not example:
+            return None
+        for key in ['value', 'user_uuid']:
+            if dct.get(key, False):
+                setattr(example, key, dct[key])
+        for key in ['created', 'updated', 'deleted']:
+            if dct.get(key, False):
+                setattr(example, key, datetime.fromisoformat(dct[key]))
+        return example
+    return dct
 
-    @classmethod
-    def atomic(cls):
-        """Do the database atomic action."""
-        # pylint: disable=no-member
-        return cls._meta.database.atomic()
-        # pylint: enable=no-member
+
+__all__ = [
+    'Session',
+    'User',
+    'Base'
+]

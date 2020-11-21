@@ -27,6 +27,7 @@ setup(
     install_requires=[
         'celery',
         'cherrypy',
-        'peewee'
+        'sqlalchemy',
+        'pacifica-auth'
     ]
 )

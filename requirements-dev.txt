@@ -1,5 +1,4 @@
 coverage
-peewee
 pep257
 pre-commit
 psycopg2
