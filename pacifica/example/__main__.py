@@ -1,58 +1,91 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """The main module for executing the CherryPy server."""
-from time import sleep
-from argparse import ArgumentParser, SUPPRESS
-from threading import Thread
+from configparser import ConfigParser
+from sys import argv as sys_argv
+import os
+import json
 import cherrypy
-from .orm import database_setup
-from .rest import Root, error_page_default
-from .globals import CHERRYPY_CONFIG
+from sqlalchemy.engine import create_engine
+from pacifica.auth import error_page_default, quickstart, create_configparser, create_argparser
+from .orm import User, Base, ExampleModel, ExampleEncoder
+from .tasks import get_db_session
+from .rest import Root
+from .config import example_config
+
+def _mount_config(configparser: ConfigParser):
+    example_config(configparser)
+    common_config = {
+        '/': {
+            'error_page.default': error_page_default,
+            'request.dispatch': cherrypy.dispatch.MethodDispatcher()
+        }
+    }
+    cherrypy.tree.mount(Root(configparser), '/example', config=common_config)
 
 
-def stop_later(doit=False):
-    """Used for unit testing stop after 60 seconds."""
-    if not doit:  # pragma: no cover
-        return
-
-    def sleep_then_exit():
-        """
-        Sleep for 20 seconds then call cherrypy exit.
-
-        Hopefully this is long enough for the end-to-end tests to finish
-        """
-        sleep(20)
-        cherrypy.engine.exit()
-    sleep_thread = Thread(target=sleep_then_exit)
-    sleep_thread.daemon = True
-    sleep_thread.start()
-
-
-def main():
+def main(argv=None):
     """Main method to start the httpd server."""
-    parser = ArgumentParser(description='Run the notifications server.')
-    parser.add_argument('-c', '--config', metavar='CONFIG', type=str,
-                        default=CHERRYPY_CONFIG, dest='config',
-                        help='cherrypy config file')
-    parser.add_argument('-p', '--port', metavar='PORT', type=int,
-                        default=8069, dest='port',
-                        help='port to listen on')
-    parser.add_argument('-a', '--address', metavar='ADDRESS',
-                        default='localhost', dest='address',
-                        help='address to listen on')
-    parser.add_argument('--stop-after-a-moment', help=SUPPRESS,
-                        default=False, dest='stop_later',
-                        action='store_true')
-    args = parser.parse_args()
-    database_setup()
-    stop_later(args.stop_later)
-    cherrypy.config.update({'error_page.default': error_page_default})
-    cherrypy.config.update({
-        'server.socket_host': args.address,
-        'server.socket_port': args.port
-    })
-    cherrypy.quickstart(Root(), '/', args.config)
+    quickstart(argv, 'Run the ingest server.', User, 'pacifica.ingest.orm.User',
+               os.path.dirname(__file__), _mount_config)
 
+
+def cmd(argv=None):
+    """Command line admin tool for managing ingest."""
+    parser = create_argparser(argv, 'Admin command line tool.')
+    parser.set_defaults(func=lambda x: parser.print_help())
+    subparsers = parser.add_subparsers(help='sub-command help')
+    setup_task_subparser(subparsers)
+    setup_db_subparser(subparsers)
+    args = parser.parse_args(argv)
+    configparser = create_configparser(args, example_config)
+    return args.func(args, configparser)
+
+
+def setup_task_subparser(subparsers):
+    """Add the job subparser."""
+    task_parser = subparsers.add_parser(
+        'task', help='task help', description='get tasks')
+    task_parser.add_argument(
+        'task_uuids', type=str, nargs='+',
+        help='get tasks from passed options.'
+    )
+    task_parser.set_defaults(func=task_output)
+
+
+def setup_db_subparser(subparsers):
+    """Setup the dbsync subparser."""
+    db_parser = subparsers.add_parser(
+        'dbsync',
+        description='Update or Create the Database.'
+    )
+    db_parser.set_defaults(func=dbsync)
+
+
+def task_output(args, configparser):
+    """Dump the jobs requested from the command line."""
+    tasks = []
+    # pylint: disable=invalid-name
+    with get_db_session(configparser) as db:
+        for task_uuid in args.task_uuids:
+            # pylint: disable=no-member
+            tasks.append(db.query(ExampleModel).filter_by(uuid=task_uuid).first())
+    print(json.dumps(tasks, sort_keys=True, indent=4, cls=ExampleEncoder))
+    return 0
+
+
+def dbsync(_args, configparser):
+    """Create/Update the database schema to current code."""
+    engine = create_engine(configparser.get('database', 'db_url'))
+    Base.metadata.create_all(engine)
+    cherrypy.config.update({
+        'SOCIAL_AUTH_USER_MODEL': 'pacifica.example.orm.User',
+    })
+    # this needs to be imported after cherrypy settings are applied.
+    # pylint: disable=import-outside-toplevel
+    from social_cherrypy.models import SocialBase
+    SocialBase.metadata.create_all(engine)
+    return 0
 
 if __name__ == '__main__':
-    main()
+    main(sys_argv[1:])

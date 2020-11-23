@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """CherryPy module containing classes for rest interface."""
+from configparser import ConfigParser
 from json import dumps
 import cherrypy
 from cherrypy import HTTPError
-from peewee import DoesNotExist
 from .orm import ExampleModel
 from .tasks import example_task
 
@@ -55,6 +55,10 @@ class Root:
     """CherryPy Root Object."""
 
     exposed = True
-    dispatch = Dispatch()
-    status = Status()
+
+    def __init__(self, configparser: ConfigParser):
+        """Create the root object."""
+        self.dispatch = Dispatch()
+        self.status = Status()
+        self.configparser = configparser
 # pylint: enable=too-few-public-methods
