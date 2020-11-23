@@ -21,7 +21,8 @@ setup(
     namespace_packages=['pacifica'],
     entry_points={
         'console_scripts': [
-            'pacifica-example=pacifica.example.__main__:main'
+            'pacifica-example=pacifica.example.__main__:main',
+            'pacifica-example-cmd=pacifica.example.__main__:cmd'
         ]
     },
     install_requires=[

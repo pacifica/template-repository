@@ -13,6 +13,7 @@ from .tasks import get_db_session
 from .rest import Root
 from .config import example_config
 
+
 def _mount_config(configparser: ConfigParser):
     example_config(configparser)
     common_config = {
@@ -26,14 +27,14 @@ def _mount_config(configparser: ConfigParser):
 
 def main(argv=None):
     """Main method to start the httpd server."""
-    quickstart(argv, 'Run the ingest server.', User, 'pacifica.ingest.orm.User',
+    quickstart(argv, 'Run the example server.', User, 'pacifica.example.orm.User',
                os.path.dirname(__file__), _mount_config)
 
 
 def cmd(argv=None):
-    """Command line admin tool for managing ingest."""
+    """Command line admin tool for managing example."""
     parser = create_argparser(argv, 'Admin command line tool.')
-    parser.set_defaults(func=lambda x: parser.print_help())
+    parser.set_defaults(func=lambda x, y: parser.print_help())
     subparsers = parser.add_subparsers(help='sub-command help')
     setup_task_subparser(subparsers)
     setup_db_subparser(subparsers)
@@ -86,6 +87,7 @@ def dbsync(_args, configparser):
     from social_cherrypy.models import SocialBase
     SocialBase.metadata.create_all(engine)
     return 0
+
 
 if __name__ == '__main__':
     main(sys_argv[1:])
