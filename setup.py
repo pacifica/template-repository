@@ -17,16 +17,18 @@ setup(
     long_description_content_type='text/markdown',
     author='David Brown',
     author_email='dmlb2000@gmail.com',
-    packages=find_packages(),
+    packages=find_packages(include=['pacifica.*']),
     namespace_packages=['pacifica'],
     entry_points={
         'console_scripts': [
-            'pacifica-example=pacifica.example.__main__:main'
+            'pacifica-example=pacifica.example.__main__:main',
+            'pacifica-example-cmd=pacifica.example.__main__:cmd'
         ]
     },
     install_requires=[
         'celery',
         'cherrypy',
-        'peewee'
+        'sqlalchemy',
+        'pacifica-auth'
     ]
 )
