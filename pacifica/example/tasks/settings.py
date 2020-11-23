@@ -31,4 +31,4 @@ if 'filesystem' in celery_settings['broker_url']:
     celery_settings['accept_content'] = ['json']
     celery_settings['result_persistent'] = False
 
-__all__ = ['celery_settings']
+__all__ = ['celery_settings', 'configparser']

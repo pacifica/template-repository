@@ -18,11 +18,19 @@ def _generate_uuid():
 class ExampleModel(Base):
     """Example saving some name data."""
 
-    __tablename__ = "examplemodel"
+    plain_keys = [
+        'uuid', 'method', 'value', 'task_uuid', 'user_uuid', 'processing',
+        'complete', 'exception'
+    ]
+    date_keys = ['created', 'updated', 'deleted']
+    json_keys = ['numbers']
+
+    __tablename__ = 'examplemodel'
     uuid = Column(String(40), primary_key=True, default=_generate_uuid, index=True)
     method = Column(Text(), default='')
     numbers = Column(Text(), default='')
     value = Column(Text(), default='')
+    task_uuid = Column(String(40), unique=True, default=None, index=True)
     user_uuid = Column(String(40), ForeignKey('user.uuid'), index=True)
     user = relationship('User')
     processing = Column(Boolean(), default=False)
@@ -39,20 +47,16 @@ class ExampleEncoder(json.JSONEncoder):
 
     def default(self, o):
         """Default method part of the API."""
-        plain_keys = [
-            'uuid', 'value', 'user_uuid', 'complete',
-            'exception', 'processing', 'method',
-        ]
         if isinstance(o, ExampleModel):
             ret = {}
-            for key in plain_keys:
+            for key in ExampleModel.plain_keys:
                 ret[key] = getattr(o, key)
-            for key in ['numbers']:
+            for key in ExampleModel.json_keys:
                 ret[key] = []
                 if getattr(o, key):
                     ret[key] = json.loads(getattr(o, key))
-            for key in ['created', 'updated', 'deleted']:
-                ret[key] = getattr(o, key).isoformat()
+            for key in ExampleModel.date_keys:
+                ret[key] = getattr(o, key).isoformat() if getattr(o, key) else None
             return ret
         return json.JSONEncoder.default(self, o)
 
@@ -64,13 +68,15 @@ def as_example(db, dct):
         example = db.query(ExampleModel).filter_by(uuid=dct['uuid']).first()
         if not example:
             return None
-        for key in ['value', 'user_uuid', 'method', 'complete', 'processing', 'exception']:
+        for key in ExampleModel.plain_keys:
+            if key == 'uuid':
+                continue
             if dct.get(key, False):
                 setattr(example, key, dct[key])
-        for key in ['numbers']:
+        for key in ExampleModel.json_keys:
             if dct.get(key, False):
                 setattr(example, key, json.dumps(dct[key]))
-        for key in ['created', 'updated', 'deleted']:
+        for key in ExampleModel.date_keys:
             if dct.get(key, False):
                 setattr(example, key, datetime.fromisoformat(dct[key]))
         return example
